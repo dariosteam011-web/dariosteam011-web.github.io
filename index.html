@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hilo — tus enlaces y fotos en una página</title>
+<meta name="description" content="Crea tu página de enlaces con cuenta, colores propios y fotos.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='26' fill='%232B3BFF'/%3E%3Cpath d='M28 62c0-24 26-42 44-27s0 42-26 30-12-36 9-36' fill='none' stroke='white' stroke-width='9' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400..800&family=Fraunces:opsz,wght@9..144,400..700&family=Nunito:wght@400..800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --cobalt:#2B3BFF; --cobalt-d:#1F2CCB; --lilac:#DDD9FF; --lilac-l:#F4F3FF;
+  --ink:#14142B; --ink-2:#4B4B6B; --line:#D9D6F5; --tang:#FF8A3D;
+  --danger:#C0264B; --ok:#157A4B;
+  --f-body:'Figtree',system-ui,sans-serif;
+  --f-head:'Bricolage Grotesque','Figtree',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:var(--f-body);color:var(--ink);background:var(--lilac-l);line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--tang);outline-offset:2px}
+.only-mobile{display:none}
+.loading{min-height:60vh;display:grid;place-items:center;color:var(--ink-2);font-weight:600}
+
+/* ---------- Botones y campos ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:2px solid transparent;border-radius:12px;padding:10px 18px;font-weight:700;cursor:pointer;text-decoration:none;background:none;transition:transform .15s,background .15s}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--cobalt);color:#fff}
+.btn-primary:hover{background:var(--cobalt-d)}
+.btn-tang{background:var(--tang);color:var(--ink)}
+.btn-tang:hover{background:#FF9B58}
+.btn-ghost{border-color:var(--line);background:#fff}
+.btn-ghost:hover{border-color:var(--cobalt)}
+.btn-white{border-color:rgba(255,255,255,.65);color:#fff}
+.btn-white:hover{background:rgba(255,255,255,.12)}
+.btn-danger{border-color:var(--line);background:#fff;color:var(--danger)}
+.btn-sm{padding:6px 12px;font-size:.875rem;border-radius:10px}
+.btn[disabled]{opacity:.55;cursor:not-allowed}
+.field{display:grid;gap:6px;margin-bottom:16px}
+.field>label,.field>span,.lbl{font-weight:700;font-size:.9rem}
+input[type=text],input[type=email],input[type=password],input[type=url],textarea,select{width:100%;padding:11px 12px;border:2px solid var(--line);border-radius:10px;background:#fff}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--cobalt)}
+textarea{resize:vertical;min-height:84px}
+input[type=color]{width:100%;height:44px;padding:3px;border:2px solid var(--line);border-radius:10px;background:#fff;cursor:pointer}
+.hint{font-size:.85rem;color:var(--ink-2);margin:0}
+.msg{margin:14px 0 0;font-weight:600;min-height:1.4em}
+.msg.err{color:var(--danger)}
+.msg.ok{color:var(--ok)}
+.notice{border:2px solid var(--tang);background:#FFF4EA;border-radius:12px;padding:14px 16px;margin-bottom:20px;font-size:.92rem}
+.notice strong{display:block;margin-bottom:4px}
+.notice ol{margin:6px 0 0;padding-left:20px}
+.notice code{background:rgba(0,0,0,.07);padding:1px 5px;border-radius:5px;font-size:.85em}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;z-index:200;max-width:90vw;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+.toast.error{background:var(--danger)}
+
+/* ---------- Marca ---------- */
+.logo{font-family:var(--f-head);font-weight:800;font-size:1.6rem;letter-spacing:-.03em;text-decoration:none;display:inline-flex;align-items:center;gap:8px;line-height:1}
+.logo svg{display:block}
+
+/* ---------- Inicio ---------- */
+.home{background:var(--cobalt);color:#fff;min-height:100vh;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px clamp(20px,5vw,64px)}
+.top nav{display:flex;gap:10px;flex-wrap:wrap}
+.hero{flex:1;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:clamp(24px,5vw,80px);align-items:center;padding:clamp(16px,4vw,48px) clamp(20px,5vw,64px) 64px;max-width:1280px;width:100%;margin:0 auto}
+.hero h1{font-family:var(--f-head);font-weight:800;font-size:clamp(2.6rem,6.4vw,5.4rem);line-height:.98;letter-spacing:-.04em;margin:0 0 20px}
+.hero .lead{font-size:1.2rem;max-width:32em;color:#E6E8FF;margin:0 0 28px}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap}
+.url-demo{margin-top:28px;color:#C9CEFF;font-size:.95rem;word-break:break-all}
+.url-demo strong{color:#fff}
+.demo{display:flex;flex-direction:column;align-items:center;gap:20px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.chip{display:inline-flex;align-items:center;gap:8px;border:2px solid rgba(255,255,255,.35);background:transparent;color:#fff;border-radius:999px;padding:5px 12px 5px 5px;font-weight:600;cursor:pointer;font-size:.9rem}
+.chip[aria-pressed=true]{background:#fff;color:var(--ink);border-color:#fff}
+.sw{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(0,0,0,.15)}
+.sw i{width:10px;height:10px;border-radius:50%;display:block}
+.panel .chip{color:var(--ink);border-color:var(--line);background:#fff}
+.panel .chip[aria-pressed=true]{border-color:var(--cobalt);background:var(--lilac-l)}
+
+/* ---------- Móvil (marco) ---------- */
+.phone{width:min(300px,100%);aspect-ratio:300/600;border:9px solid var(--ink);border-radius:42px;background:var(--ink);box-shadow:0 30px 60px -20px rgba(8,10,80,.55);overflow:hidden;position:relative}
+.phone-screen{position:absolute;inset:0;overflow-y:auto;border-radius:32px;scrollbar-width:none}
+.phone-screen::-webkit-scrollbar{display:none}
+
+/* ---------- Perfil público ---------- */
+.pf{position:relative;min-height:100%;background:var(--bg);color:var(--fg);overflow:hidden;--tile-r:12px}
+.pf.bg-gradient{background:linear-gradient(165deg,var(--bg),var(--bg2))}
+.pf-bgimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pf-scrim{position:absolute;inset:0;background:rgba(0,0,0,.34)}
+.pf-in{position:relative;max-width:480px;margin:0 auto;padding:44px 20px 28px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.pf-av{width:96px;height:96px;object-fit:cover;border-radius:50%;margin-bottom:14px;display:block}
+.pf-av.soft{border-radius:28%}
+.pf-av.ph{display:grid;place-items:center;font-size:2.4rem;font-weight:800;background:var(--btn);color:var(--btn-fg)}
+.pf-name{font-size:1.5rem;font-weight:800;line-height:1.15;margin:0}
+.pf-user{opacity:.78;font-size:.95rem;margin:2px 0 0}
+.pf-bio{margin:12px 0 0;max-width:34ch;white-space:pre-line;overflow-wrap:anywhere}
+.pf-links{width:100%;display:flex;flex-direction:column;gap:12px;margin-top:26px}
+.pf-link{display:flex;align-items:center;justify-content:center;min-height:54px;padding:12px 18px;background:var(--btn);color:var(--btn-fg);border:2px solid var(--btn);font-weight:700;text-decoration:none;position:relative;transition:transform .15s}
+.pf-link:hover{transform:translateY(-2px)}
+.pf-link img{width:34px;height:34px;object-fit:cover;border-radius:8px;position:absolute;left:9px}
+.pf-link span{padding:0 36px;overflow-wrap:anywhere}
+.bs-pill .pf-link{border-radius:999px}
+.bs-pill .pf-link img{border-radius:50%}
+.bs-round .pf-link{border-radius:14px}
+.bs-square .pf-link{border-radius:0}
+.bs-square .pf-link img{border-radius:0}
+.bs-outline .pf-link{background:transparent;color:var(--fg);border-color:var(--fg);border-radius:12px}
+.bs-pill{--tile-r:18px}.bs-square{--tile-r:0}.bs-outline{--tile-r:10px}
+.pf-gal{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:26px}
+.pf-gal button{padding:0;border:0;background:rgba(127,127,127,.25);aspect-ratio:1;overflow:hidden;cursor:zoom-in;border-radius:var(--tile-r)}
+.pf-gal img{width:100%;height:100%;object-fit:cover;display:block}
+.pf-empty{margin-top:26px;opacity:.75}
+.pf-foot{margin-top:34px;font-size:.8rem;opacity:.75;color:var(--fg);text-decoration:none;font-weight:600}
+.pf-page .pf{min-height:100vh}
+.lb{position:fixed;inset:0;background:rgba(10,10,30,.92);display:grid;place-items:center;z-index:100;padding:20px}
+.lb figure{margin:0;max-width:min(92vw,900px);color:#fff;text-align:center}
+.lb img{max-width:100%;max-height:78vh;border-radius:8px;display:block;margin:0 auto 10px}
+.lb-x{position:absolute;top:14px;right:14px;width:44px;height:44px;border-radius:50%;border:2px solid rgba(255,255,255,.6);background:transparent;color:#fff;font-size:1.2rem;cursor:pointer}
+
+/* ---------- Acceso ---------- */
+.auth{min-height:100vh;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr)}
+.auth-side{background:var(--cobalt);color:#fff;padding:32px clamp(24px,5vw,64px);display:flex;flex-direction:column;justify-content:space-between;gap:40px}
+.auth-side h2{font-family:var(--f-head);font-size:clamp(2rem,4vw,3.2rem);line-height:1;letter-spacing:-.03em;margin:0;max-width:11ch}
+.auth-main{display:grid;place-items:center;padding:32px 20px;background:#fff}
+.auth-card{width:100%;max-width:400px}
+.auth-card h1{font-family:var(--f-head);font-size:2rem;letter-spacing:-.02em;margin:0 0 6px;line-height:1.1}
+.auth-card .sub{color:var(--ink-2);margin:0 0 24px}
+.auth-card .logo{color:var(--cobalt);margin-bottom:28px}
+.linkbtn{background:none;border:0;padding:0;color:var(--cobalt);font-weight:700;cursor:pointer;text-decoration:underline}
+.auth-alt{margin-top:20px;font-size:.95rem;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+
+/* ---------- Editor ---------- */
+.ed{min-height:100vh;display:flex;flex-direction:column}
+.ed-top{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:10px clamp(12px,3vw,28px);flex-wrap:wrap}
+.ed-top .logo{color:var(--cobalt);font-size:1.4rem}
+.spacer{flex:1}
+.urlpill{display:inline-flex;align-items:center;gap:8px;background:var(--lilac-l);border:1px solid var(--line);border-radius:999px;padding:4px 4px 4px 14px;font-size:.9rem;max-width:100%}
+.urlpill span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:36ch}
+.ed-body{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:clamp(16px,3vw,40px);padding:clamp(12px,3vw,32px);max-width:1180px;width:100%;margin:0 auto}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--line);margin-bottom:20px;overflow-x:auto}
+.tab{background:none;border:0;padding:10px 16px;font-weight:700;color:var(--ink-2);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap}
+.tab[aria-selected=true]{color:var(--cobalt);border-bottom-color:var(--cobalt)}
+.preview-col{position:sticky;top:84px;align-self:start;display:flex;flex-direction:column;align-items:center;gap:12px}
+.sect{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px}
+.sect h3{font-family:var(--f-head);margin:0 0 14px;font-size:1.15rem;letter-spacing:-.01em}
+.row{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff}
+.row .fields{display:grid;gap:8px}
+.row .acts{display:flex;flex-direction:column;gap:6px}
+.thumb{width:56px;height:56px;border:2px dashed var(--line);border-radius:12px;background:var(--lilac-l);cursor:pointer;display:grid;place-items:center;overflow:hidden;padding:0;font-size:1.4rem;color:var(--ink-2)}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb:hover{border-color:var(--cobalt)}
+.icon-btn{width:34px;height:34px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;font-weight:700;line-height:1}
+.icon-btn:hover{border-color:var(--cobalt)}
+.icon-btn[disabled]{opacity:.35;cursor:not-allowed}
+.av-edit{display:flex;align-items:center;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.av-edit .pf-av{margin:0;width:80px;height:80px;font-size:2rem}
+.g-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-top:14px}
+.g-item{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;display:grid}
+.g-item img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.g-item input{border-radius:0;border-width:1px 0 0;padding:8px 10px;font-size:.85rem}
+.g-acts{display:flex;justify-content:space-between;padding:6px;gap:4px}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.seg button{border:2px solid var(--line);background:#fff;border-radius:10px;padding:8px 14px;cursor:pointer;font-weight:600}
+.seg button[aria-pressed=true]{border-color:var(--cobalt);background:var(--lilac-l);color:var(--cobalt)}
+.pre{display:flex;flex-wrap:wrap;gap:8px}
+.colors{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+.colors .field{margin-bottom:0}
+
+@media (max-width:900px){
+  .only-mobile{display:inline-flex}
+  .hero{grid-template-columns:1fr}
+  .ed-body{grid-template-columns:1fr}
+  .preview-col{display:none}
+  .show-preview .preview-col{display:flex;position:fixed;inset:0;z-index:40;background:var(--lilac-l);justify-content:center;padding:20px;overflow:auto;top:0}
+  .auth{grid-template-columns:1fr}
+  .auth-side{display:none}
+  .urlpill span{max-width:18ch}
+}
+@media (max-width:520px){
+  .row{grid-template-columns:48px minmax(0,1fr)}
+  .row .acts{grid-column:1/-1;flex-direction:row}
+  .thumb{width:48px;height:48px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">Cargando…</div></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(() => {
+'use strict';
+
+/* =====================================================================
+   1) CONFIGURACIÓN — rellena estos dos valores con los de tu proyecto
+      de Supabase (Project Settings → API). La clave "anon" es pública
+      por diseño; la seguridad la dan las políticas RLS de supabase-setup.sql.
+   ===================================================================== */
+const CONFIG = {
+  SUPABASE_URL: 'https://TU-PROYECTO.supabase.co',
+  SUPABASE_ANON_KEY: 'TU_ANON_KEY',
+  BUCKET: 'media'
+};
+
+const CONFIGURED = !/TU-PROYECTO|TU_ANON_KEY/.test(CONFIG.SUPABASE_URL + CONFIG.SUPABASE_ANON_KEY);
+const sb = (CONFIGURED && window.supabase)
+  ? window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY)
+  : null;
+
+/* =====================================================================
+   2) Utilidades
+   ===================================================================== */
+const $ = s => document.querySelector(s);
+const app = $('#app');
+const TITLE = 'Hilo — tus enlaces y fotos en una página';
+const rid = () => Math.random().toString(36).slice(2, 10);
+const clone = o => JSON.parse(JSON.stringify(o));
+const base = () => location.href.split('#')[0];
+const go = hash => { location.hash = hash; };
+const USERNAME_RE = /^[a-z0-9_]{3,24}$/;
+const HEX = /^#[0-9a-f]{6}$/i;
+
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k === 'style') { for (const [sk, sv] of Object.entries(v)) el.style.setProperty(sk, sv); }
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2).toLowerCase(), v);
+    else if (k === 'value' || k === 'checked' || k === 'disabled') el[k] = v;
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  add(el, kids);
+  return el;
+}
+function add(el, kids) {
+  for (const c of kids) {
+    if (c == null || c === false) continue;
+    if (Array.isArray(c)) add(el, c);
+    else el.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  }
+}
+function mount(node) { app.replaceChildren(node); window.scrollTo(0, 0); }
+
+let toastTimer;
+function toast(msg, kind) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (kind === 'error' ? ' error' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = 'toast'; }, 3800);
+}
+
+function safeUrl(raw) {
+  raw = (raw || '').trim();
+  if (!raw) return '';
+  if (/^(mailto:|tel:)/i.test(raw)) return raw;
+  if (/^[^\s/@:]+@[^\s/@:]+\.[^\s/@:]+$/.test(raw)) return 'mailto:' + raw;
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(raw)) raw = 'https://' + raw;
+  try { const u = new URL(raw); return /^https?:$/.test(u.protocol) ? u.href : ''; }
+  catch { return ''; }
+}
+function safeHttp(raw) { const u = safeUrl(raw); return /^https?:/.test(u) ? u : ''; }
+function hostOf(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u; } }
+
+function logo(cls) {
+  const a = h('a', { class: 'logo' + (cls ? ' ' + cls : ''), href: '#/', 'aria-label': 'Hilo, inicio' });
+  a.innerHTML = '<svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true"><path d="M6 20c0-8 8-14 14-9s0 14-8 10-4-12 3-12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>';
+  a.append(document.createTextNode('hilo'));
+  return a;
+}
+
+/* =====================================================================
+   3) Temas, fuentes y modelo de perfil
+   ===================================================================== */
+const FONTS = {
+  figtree:   { label: 'Moderna',    css: "'Figtree', system-ui, sans-serif" },
+  bricolage: { label: 'Expresiva',  css: "'Bricolage Grotesque', 'Figtree', sans-serif" },
+  fraunces:  { label: 'Editorial',  css: "'Fraunces', Georgia, serif" },
+  nunito:    { label: 'Redonda',    css: "'Nunito', system-ui, sans-serif" },
+  mono:      { label: 'Técnica',    css: "'Space Mono', ui-monospace, monospace" }
+};
+const PRESETS = {
+  lila:      { name: 'Lila',      bg_type: 'color',    bg_color: '#DDD9FF', bg_color2: '#DDD9FF', text_color: '#14142B', btn_color: '#14142B', btn_text: '#FFFFFF', btn_style: 'square',  font: 'fraunces' },
+  cobalto:   { name: 'Cobalto',   bg_type: 'color',    bg_color: '#2B3BFF', bg_color2: '#2B3BFF', text_color: '#FFFFFF', btn_color: '#FFFFFF', btn_text: '#14142B', btn_style: 'pill',    font: 'figtree' },
+  mandarina: { name: 'Mandarina', bg_type: 'color',    bg_color: '#FF8A3D', bg_color2: '#FF8A3D', text_color: '#2A1200', btn_color: '#2A1200', btn_text: '#FFE9D6', btn_style: 'round',   font: 'bricolage' },
+  bosque:    { name: 'Bosque',    bg_type: 'color',    bg_color: '#12372A', bg_color2: '#12372A', text_color: '#EAF5EE', btn_color: '#BDE8CF', btn_text: '#12372A', btn_style: 'outline', font: 'nunito' },
+  noche:     { name: 'Noche',     bg_type: 'gradient', bg_color: '#14142B', bg_color2: '#4B2DA8', text_color: '#FFFFFF', btn_color: '#FFFFFF', btn_text: '#14142B', btn_style: 'pill',    font: 'mono' },
+  hielo:     { name: 'Hielo',     bg_type: 'color',    bg_color: '#EAF2FB', bg_color2: '#EAF2FB', text_color: '#0F2A44', btn_color: '#0F2A44', btn_text: '#FFFFFF', btn_style: 'round',   font: 'figtree' }
+};
+const COLOR_KEYS = ['bg_color', 'bg_color2', 'text_color', 'btn_color', 'btn_text'];
+const themeOf = key => { const { name, ...rest } = PRESETS[key]; return { preset: key, bg_image: '', avatar_shape: 'circle', ...rest }; };
+const DEFAULT_THEME = themeOf('lila');
+
+function normTheme(t) {
+  const b = { ...DEFAULT_THEME, ...(t || {}) };
+  for (const k of COLOR_KEYS) if (!HEX.test(b[k])) b[k] = DEFAULT_THEME[k];
+  if (!FONTS[b.font]) b.font = 'figtree';
+  if (!['color', 'gradient', 'image'].includes(b.bg_type)) b.bg_type = 'color';
+  if (!['pill', 'round', 'square', 'outline'].includes(b.btn_style)) b.btn_style = 'pill';
+  if (!['circle', 'soft'].includes(b.avatar_shape)) b.avatar_shape = 'circle';
+  b.bg_image = safeHttp(b.bg_image);
+  return b;
+}
+function fromRow(r) {
+  return {
+    username: r.username || '',
+    display_name: r.display_name || '',
+    bio: r.bio || '',
+    avatar_url: r.avatar_url || '',
+    theme: normTheme(r.theme),
+    links: Array.isArray(r.links) ? r.links.map(l => ({ id: l.id || rid(), title: l.title || '', url: l.url || '', image: l.image || '' })) : [],
+    gallery: Array.isArray(r.gallery) ? r.gallery.map(g => ({ id: g.id || rid(), url: g.url || '', caption: g.caption || '' })) : []
+  };
+}
+
+/* =====================================================================
+   4) Perfil: se usa en la página pública, en la vista previa y en la demo
+   ===================================================================== */
+function renderProfile(p, opts) {
+  const preview = !!(opts && opts.preview);
+  const t = normTheme(p.theme);
+  const name = (p.display_name || '').trim() || p.username || 'Tu nombre';
+  const links = (p.links || [])
+    .map(l => ({ title: (l.title || '').trim(), url: safeUrl(l.url), image: safeHttp(l.image) }))
+    .filter(l => l.url);
+  const gallery = (p.gallery || []).map(g => ({ url: safeHttp(g.url), caption: (g.caption || '').trim() })).filter(g => g.url);
+
+  const root = h('div', {
+    class: `pf bg-${t.bg_type} bs-${t.btn_style}`,
+    style: {
+      '--bg': t.bg_color, '--bg2': t.bg_color2, '--fg': t.text_color,
+      '--btn': t.btn_color, '--btn-fg': t.btn_text, 'font-family': FONTS[t.font].css
+    }
+  });
+  if (t.bg_type === 'image' && t.bg_image) {
+    root.append(h('img', { class: 'pf-bgimg', src: t.bg_image, alt: '' }), h('div', { class: 'pf-scrim' }));
+  }
+
+  const soft = t.avatar_shape === 'soft' ? ' soft' : '';
+  const avatarSrc = safeHttp(p.avatar_url);
+  const avatar = avatarSrc
+    ? h('img', { class: 'pf-av' + soft, src: avatarSrc, alt: name })
+    : h('div', { class: 'pf-av ph' + soft, 'aria-hidden': 'true' }, name.charAt(0).toUpperCase());
+
+  const inner = h('div', { class: 'pf-in' },
+    avatar,
+    h('h1', { class: 'pf-name' }, name),
+    p.username ? h('p', { class: 'pf-user' }, '@' + p.username) : null,
+    (p.bio || '').trim() ? h('p', { class: 'pf-bio' }, p.bio.trim()) : null,
+    links.length
+      ? h('div', { class: 'pf-links' }, links.map(l =>
+          h('a', {
+            class: 'pf-link', href: l.url,
+            target: l.url.startsWith('http') ? '_blank' : null,
+            rel: 'noopener noreferrer nofollow',
+            onClick: preview ? e => e.preventDefault() : null
+          }, l.image ? h('img', { src: l.image, alt: '' }) : null, h('span', {}, l.title || hostOf(l.url)))))
+      : null,
+    gallery.length
+      ? h('div', { class: 'pf-gal' }, gallery.map(g =>
+          h('button', { type: 'button', 'aria-label': g.caption || 'Ampliar foto', onClick: preview ? null : () => openLightbox(g) },
+            h('img', { src: g.url, alt: g.caption, loading: 'lazy' }))))
+      : null,
+    (!links.length && !gallery.length) ? h('p', { class: 'pf-empty' }, 'Aún no hay nada por aquí.') : null,
+    h('a', { class: 'pf-foot', href: '#/', onClick: preview ? e => e.preventDefault() : null }, 'Hecho con Hilo')
+  );
+  root.append(inner);
+  return root;
+}
+
+function openLightbox(item) {
+  const prev = document.activeElement;
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  const close = () => { lb.remove(); document.removeEventListener('keydown', onKey); if (prev && prev.focus) prev.focus(); };
+  const x = h('button', { class: 'lb-x', type: 'button', 'aria-label': 'Cerrar', onClick: close }, '✕');
+  const lb = h('div', { class: 'lb', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Foto ampliada', onClick: e => { if (e.target === lb) close(); } },
+    x,
+    h('figure', {}, h('img', { src: item.url, alt: item.caption || '' }), item.caption ? h('figcaption', {}, item.caption) : null));
+  document.addEventListener('keydown', onKey);
+  document.body.append(lb);
+  x.focus();
+}
+
+/* =====================================================================
+   5) Estado, subida de imágenes y sesión
+   ===================================================================== */
+const state = { session: null, owner: null, profile: null, draft: null, dirty: false, saving: false, tab: 'perfil', trash: [], rt: 0 };
+
+async function processImage(file, max) {
+  if (!file.type.startsWith('image/')) throw new Error('El archivo no es una imagen.');
+  if (file.size > 20 * 1024 * 1024) throw new Error('La imagen pesa más de 20 MB.');
+  const bmp = await createImageBitmap(file);
+  const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const w = Math.max(1, Math.round(bmp.width * scale)), ht = Math.max(1, Math.round(bmp.height * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = ht;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(bmp, 0, 0, w, ht);
+  let blob = await new Promise(r => canvas.toBlob(r, 'image/webp', 0.86));
+  if (!blob || blob.type !== 'image/webp') {
+    ctx.globalCompositeOperation = 'destination-over';
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, ht);
+    blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.86));
+  }
+  return blob;
+}
+async function uploadImage(file, max) {
+  const blob = await processImage(file, max);
+  const ext = blob.type === 'image/webp' ? 'webp' : 'jpg';
+  const path = `${state.session.user.id}/${Date.now()}-${rid()}.${ext}`;
+  const { error } = await sb.storage.from(CONFIG.BUCKET).upload(path, blob, { contentType: blob.type, cacheControl: '31536000' });
+  if (error) throw error;
+  return sb.storage.from(CONFIG.BUCKET).getPublicUrl(path).data.publicUrl;
+}
+async function uploadMany(files, max) {
+  const out = [];
+  toast('Subiendo…');
+  for (const f of files) {
+    try { out.push(await uploadImage(f, max)); }
+    catch (e) { toast('No se pudo subir ' + f.name + ': ' + (e.message || e), 'error'); }
+  }
+  if (out.length) toast(out.length === 1 ? 'Foto subida' : out.length + ' fotos subidas');
+  return out;
+}
+function pickFiles(multiple) {
+  return new Promise(res => {
+    const i = h('input', { type: 'file', accept: 'image/*', multiple: !!multiple });
+    i.addEventListener('change', () => res([...i.files]));
+    i.click();
+  });
+}
+function trashUrl(u) { if (u) state.trash.push(u); }
+async function removeMedia(urls) {
+  const marker = `/object/public/${CONFIG.BUCKET}/`;
+  const paths = urls.map(u => { const i = u.indexOf(marker); return i < 0 ? null : decodeURIComponent(u.slice(i + marker.length).split('?')[0]); }).filter(Boolean);
+  if (paths.length) { try { await sb.storage.from(CONFIG.BUCKET).remove(paths); } catch (e) { /* no crítico */ } }
+}
+
+function authError(err) {
+  const m = (err && err.message) || '';
+  if (/invalid login/i.test(m)) return 'Correo o contraseña incorrectos.';
+  if (/already registered|already been registered/i.test(m)) return 'Ya existe una cuenta con ese correo.';
+  if (/not confirmed/i.test(m)) return 'Confirma tu correo antes de entrar.';
+  if (/at least|weak|short/i.test(m)) return 'La contraseña debe tener al menos 6 caracteres.';
+  if (/rate limit|too many/i.test(m)) return 'Demasiados intentos. Espera un momento e inténtalo de nuevo.';
+  return m || 'Algo ha fallado. Inténtalo de nuevo.';
+}
+
+function setupNotice() {
+  return h('div', { class: 'notice', role: 'note' },
+    h('strong', {}, 'Falta conectar la base de datos'),
+    'Las cuentas y las fotos se guardan en Supabase (plan gratuito):',
+    h('ol', {},
+      h('li', {}, 'Crea un proyecto en supabase.com.'),
+      h('li', {}, 'En SQL Editor, ejecuta el archivo ', h('code', {}, 'supabase-setup.sql'), '.'),
+      h('li', {}, 'Copia la URL y la clave anon en ', h('code', {}, 'CONFIG'), ' al inicio del script de ', h('code', {}, 'index.html'), '.')));
+}
+const loadingNode = () => h('div', { class: 'loading' }, 'Cargando…');
+function errorNode(msg) {
+  return h('div', { class: 'loading' }, h('div', { style: { 'text-align': 'center', 'max-width': '420px', padding: '20px' } },
+    h('p', {}, msg), h('a', { class: 'btn btn-primary', href: '#/' }, 'Volver al inicio')));
+}
+
+/* =====================================================================
+   6) Vistas: inicio
+   ===================================================================== */
+const tile = (bg, shape) => 'data:image/svg+xml;utf8,' + encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="${bg}"/>${shape}</svg>`);
+const DEMO = {
+  username: 'lucia', display_name: 'Lucía Marín', bio: 'Ilustradora. Dibujo plantas, mercados y gatos.', avatar_url: '',
+  links: [
+    { title: 'Mi tienda de láminas', url: 'https://ejemplo.com/tienda' },
+    { title: 'Boletín mensual', url: 'https://ejemplo.com/boletin' },
+    { title: 'Encargos abiertos', url: 'https://ejemplo.com/encargos' }
+  ],
+  gallery: [
+    { url: tile('#FFB38A', '<circle cx="50" cy="55" r="26" fill="#FF6B3D"/>') },
+    { url: tile('#9AD7B5', '<path d="M20 80C20 40 50 20 82 22 82 56 60 82 20 80Z" fill="#2F9E6B"/>') },
+    { url: tile('#8FA2FF', '<path d="M50 18 84 80H16Z" fill="#2B3BFF"/>') }
+  ]
+};
+
+function swatch(p) {
+  const bg = p.bg_type === 'gradient' ? `linear-gradient(135deg,${p.bg_color},${p.bg_color2})` : p.bg_color;
+  return h('span', { class: 'sw', style: { background: bg } }, h('i', { style: { background: p.btn_color } }));
+}
+
+function viewHome() {
+  let key = 'lila';
+  const screen = h('div', { class: 'phone-screen' });
+  const chips = h('div', { class: 'chips', role: 'group', 'aria-label': 'Temas de ejemplo' });
+  function draw() {
+    screen.replaceChildren(renderProfile({ ...DEMO, theme: themeOf(key) }, { preview: true }));
+    chips.replaceChildren(...Object.entries(PRESETS).map(([k, p]) =>
+      h('button', { class: 'chip', type: 'button', 'aria-pressed': String(k === key), onClick: () => { key = k; draw(); } }, swatch(p), p.name)));
+  }
+  draw();
+  const signed = !!state.session;
+  mount(h('div', { class: 'home' },
+    h('header', { class: 'top' }, logo(),
+      h('nav', {}, signed
+        ? h('a', { class: 'btn btn-white btn-sm', href: '#/editor' }, 'Mi editor')
+        : [h('a', { class: 'btn btn-white btn-sm', href: '#/entrar' }, 'Entrar'), h('a', { class: 'btn btn-tang btn-sm', href: '#/crear' }, 'Crear mi página')])),
+    h('main', { class: 'hero' },
+      h('div', {},
+        h('h1', {}, 'Un enlace para todo lo que haces.'),
+        h('p', { class: 'lead' }, 'Reúne tus enlaces y tus fotos en una página con tu nombre. Elige colores, tipografía y estilo de botones, y compártela donde quieras.'),
+        h('div', { class: 'cta-row' },
+          signed ? h('a', { class: 'btn btn-tang', href: '#/editor' }, 'Ir a mi editor') : h('a', { class: 'btn btn-tang', href: '#/crear' }, 'Crear mi página'),
+          !signed ? h('a', { class: 'btn btn-white', href: '#/entrar' }, 'Ya tengo cuenta') : null),
+        h('p', { class: 'url-demo' }, 'Tu página vivirá en ', h('strong', {}, base().replace(/^https?:\/\//, '') + '#/u/tunombre'))),
+      h('div', { class: 'demo' },
+        h('div', { class: 'phone' }, screen),
+        chips))));
+}
+
+/* =====================================================================
+   7) Vistas: acceso (entrar, crear cuenta, nueva contraseña)
+   ===================================================================== */
+function viewAuth(mode) {
+  if (state.session) { go('#/editor'); return; }
+  let signup = mode === 'signup';
+  const msg = h('p', { class: 'msg', role: 'alert' });
+  const email = h('input', { type: 'email', id: 'em', required: true, autocomplete: 'email', placeholder: 'tu@correo.com' });
+  const pass = h('input', { type: 'password', id: 'pw', required: true, minlength: '6', autocomplete: signup ? 'new-password' : 'current-password' });
+  const submit = h('button', { class: 'btn btn-primary', type: 'submit', style: { width: '100%' } }, signup ? 'Crear cuenta' : 'Entrar');
+  const setMsg = (t, kind) => { msg.textContent = t || ''; msg.className = 'msg' + (kind ? ' ' + kind : ''); };
+
+  async function onSubmit(e) {
+    e.preventDefault();
+    if (!sb) { setMsg('Primero conecta Supabase (mira el aviso de arriba).', 'err'); return; }
+    submit.disabled = true; setMsg('');
+    if (signup) {
+      const { data, error } = await sb.auth.signUp({ email: email.value.trim(), password: pass.value, options: { emailRedirectTo: base() } });
+      if (error) setMsg(authError(error), 'err');
+      else if (!data.session) setMsg('Te hemos enviado un correo para confirmar la cuenta. Ábrelo y vuelve aquí.', 'ok');
+    } else {
+      const { error } = await sb.auth.signInWithPassword({ email: email.value.trim(), password: pass.value });
+      if (error) setMsg(authError(error), 'err');
+    }
+    submit.disabled = false;
+  }
+  async function forgot() {
+    if (!sb) return;
+    if (!email.value.trim()) { setMsg('Escribe tu correo y vuelve a pulsar aquí.', 'err'); email.focus(); return; }
+    const { error } = await sb.auth.resetPasswordForEmail(email.value.trim(), { redirectTo: base() });
+    if (error) setMsg(authError(error), 'err'); else setMsg('Te hemos enviado un correo para elegir una contraseña nueva.', 'ok');
+  }
+
+  mount(h('div', { class: 'auth' },
+    h('aside', { class: 'auth-side' }, logo(), h('h2', {}, 'Tu página con tu nombre.'), h('span', {})),
+    h('main', { class: 'auth-main' }, h('div', { class: 'auth-card' },
+      logo('only-mobile'),
+      !sb ? setupNotice() : null,
+      h('h1', {}, signup ? 'Crea tu cuenta' : 'Entra en tu cuenta'),
+      h('p', { class: 'sub' }, signup ? 'Solo necesitas un correo y una contraseña.' : 'Edita tu página y tus fotos.'),
+      h('form', { onSubmit }, 
+        h('div', { class: 'field' }, h('label', { for: 'em' }, 'Correo'), email),
+        h('div', { class: 'field' }, h('label', { for: 'pw' }, 'Contraseña'), pass,
+          signup ? h('p', { class: 'hint' }, 'Mínimo 6 caracteres.') : null),
+        submit, msg),
+      h('div', { class: 'auth-alt' },
+        signup
+          ? h('span', {}, '¿Ya tienes cuenta? ', h('a', { href: '#/entrar' }, 'Entrar'))
+          : [h('span', {}, '¿No tienes cuenta? ', h('a', { href: '#/crear' }, 'Crear cuenta')),
+             h('button', { class: 'linkbtn', type: 'button', style: { 'text-align': 'left' }, onClick: forgot }, 'He olvidado mi contraseña')])))));
+}
+
+function viewNewPassword() {
+  const pass = h('input', { type: 'password', id: 'np', required: true, minlength: '6', autocomplete: 'new-password' });
+  const msg = h('p', { class: 'msg', role: 'alert' });
+  mount(h('div', { class: 'auth' },
+    h('aside', { class: 'auth-side' }, logo(), h('h2', {}, 'Elige una contraseña nueva.'), h('span', {})),
+    h('main', { class: 'auth-main' }, h('div', { class: 'auth-card' },
+      logo('only-mobile'),
+      h('h1', {}, 'Contraseña nueva'),
+      h('p', { class: 'sub' }, 'Úsala la próxima vez que entres.'),
+      h('form', { onSubmit: async e => {
+        e.preventDefault();
+        if (!sb) return;
+        const { error } = await sb.auth.updateUser({ password: pass.value });
+        if (error) { msg.textContent = authError(error); msg.className = 'msg err'; return; }
+        toast('Contraseña actualizada'); go('#/editor');
+      } },
+        h('div', { class: 'field' }, h('label', { for: 'np' }, 'Contraseña nueva'), pass),
+        h('button', { class: 'btn btn-primary', type: 'submit', style: { width: '100%' } }, 'Guardar contraseña'), msg)))));
+}
+
+/* =====================================================================
+   8) Página pública  #/u/usuario
+   ===================================================================== */
+async function viewProfile(username, tok) {
+  if (!sb) { mount(h('div', { style: { 'max-width': '520px', margin: '40px auto', padding: '0 20px' } }, setupNotice(), h('a', { href: '#/' }, 'Volver al inicio'))); return; }
+  mount(loadingNode());
+  const { data, error } = await sb.from('profiles').select('username,display_name,bio,avatar_url,theme,links,gallery').eq('username', username).maybeSingle();
+  if (tok !== state.rt) return;
+  if (error) { mount(errorNode('No se pudo cargar esta página.')); return; }
+  if (!data) {
+    mount(h('div', { class: 'loading' }, h('div', { style: { 'text-align': 'center', padding: '20px' } },
+      h('h1', { style: { 'font-family': 'var(--f-head)', margin: '0 0 8px' } }, 'Esta página no existe'),
+      h('p', { class: 'hint', style: { 'margin-bottom': '18px' } }, '@' + username + ' no está registrado todavía.'),
+      h('a', { class: 'btn btn-primary', href: '#/crear' }, 'Crear mi página'))));
+    return;
+  }
+  document.title = (data.display_name || data.username) + ' · Hilo';
+  mount(h('div', { class: 'pf-page' }, renderProfile(fromRow(data))));
+}
+
+/* =====================================================================
+   9) Editor  #/editor
+   ===================================================================== */
+async function viewEditorEntry(tok) {
+  if (!state.session) { go('#/entrar'); return; }
+  const uid = state.session.user.id;
+  if (state.owner !== uid) { state.owner = uid; state.profile = null; state.draft = null; state.dirty = false; state.trash = []; }
+  if (!state.draft) {
+    mount(loadingNode());
+    const { data, error } = await sb.from('profiles').select('*').eq('id', uid).maybeSingle();
+    if (tok !== state.rt) return;
+    if (error) { mount(errorNode('No se pudo cargar tu perfil: ' + error.message + ' (¿has ejecutado supabase-setup.sql?)')); return; }
+    if (!data) { viewOnboarding(); return; }
+    state.profile = data; state.draft = fromRow(data);
+  }
+  viewEditor();
+}
+
+function viewOnboarding() {
+  const user = h('input', { type: 'text', id: 'un', required: true, maxlength: '24', autocomplete: 'off', autocapitalize: 'none', placeholder: 'lucia' });
+  const name = h('input', { type: 'text', id: 'dn', maxlength: '50', placeholder: 'Lucía Marín' });
+  const msg = h('p', { class: 'msg', role: 'alert' });
+  user.addEventListener('input', () => { user.value = user.value.toLowerCase().replace(/[^a-z0-9_]/g, ''); });
+  mount(h('div', { class: 'auth' },
+    h('aside', { class: 'auth-side' }, logo(), h('h2', {}, 'Último paso: tu nombre.'), h('span', {})),
+    h('main', { class: 'auth-main' }, h('div', { class: 'auth-card' },
+      logo('only-mobile'),
+      h('h1', {}, 'Elige tu dirección'),
+      h('p', { class: 'sub' }, 'Será el final del enlace de tu página.'),
+      h('form', { onSubmit: async e => {
+        e.preventDefault();
+        const username = user.value.trim().toLowerCase();
+        if (!USERNAME_RE.test(username)) { msg.textContent = 'Entre 3 y 24 caracteres: letras minúsculas, números o _.'; msg.className = 'msg err'; return; }
+        const row = { id: state.session.user.id, username, display_name: name.value.trim() || username, bio: '', avatar_url: null, theme: DEFAULT_THEME, links: [], gallery: [] };
+        const { data, error } = await sb.from('profiles').insert(row).select().single();
+        if (error) { msg.textContent = error.code === '23505' ? 'Ese nombre de usuario ya está en uso.' : error.message; msg.className = 'msg err'; return; }
+        state.profile = data; state.draft = fromRow(data); state.dirty = false;
+        viewEditor();
+      } },
+        h('div', { class: 'field' }, h('label', { for: 'un' }, 'Nombre de usuario'), user, h('p', { class: 'hint' }, base().replace(/^https?:\/\//, '') + '#/u/…')),
+        h('div', { class: 'field' }, h('label', { for: 'dn' }, 'Nombre visible'), name),
+        h('button', { class: 'btn btn-primary', type: 'submit', style: { width: '100%' } }, 'Continuar'), msg)))));
+}
+
+function seg(opts, cur, onPick, styleFn) {
+  return h('div', { class: 'seg', role: 'group' }, opts.map(([v, label]) =>
+    h('button', { type: 'button', 'aria-pressed': String(v === cur), style: styleFn ? styleFn(v) : null, onClick: () => onPick(v) }, label)));
+}
+function field(label, input, hint) {
+  return h('div', { class: 'field' }, h('span', { class: 'lbl' }, label), input, hint ? h('p', { class: 'hint' }, hint) : null);
+}
+
+function viewEditor() {
+  const d = state.draft;
+  const TABS = [['perfil', 'Perfil'], ['enlaces', 'Enlaces'], ['fotos', 'Fotos'], ['diseno', 'Diseño']];
+  const screen = h('div', { class: 'phone-screen' });
+  const panel = h('div', { class: 'panel', role: 'tabpanel' });
+  const tabsEl = h('div', { class: 'tabs', role: 'tablist' });
+  const urlText = h('span', {});
+  const viewLink = h('a', { class: 'btn btn-ghost btn-sm', target: '_blank', rel: 'noopener' }, 'Ver mi página');
+  const saveBtn = h('button', { class: 'btn btn-primary btn-sm', type: 'button', onClick: doSave }, 'Guardado');
+  const pubUrl = () => `${base()}#/u/${d.username || ''}`;
+
+  function syncSave() {
+    saveBtn.disabled = !state.dirty || state.saving;
+    saveBtn.textContent = state.saving ? 'Guardando…' : (state.dirty ? 'Guardar cambios' : 'Guardado');
+    urlText.textContent = pubUrl().replace(/^https?:\/\//, '');
+    viewLink.href = pubUrl();
+  }
+  function drawPreview() {
+    const y = screen.scrollTop;
+    screen.replaceChildren(renderProfile(d, { preview: true }));
+    screen.scrollTop = y;
+  }
+  function touch() { state.dirty = true; drawPreview(); syncSave(); }
+  function setTab(t) { state.tab = t; drawTabs(); drawPanel(); }
+  function drawTabs() {
+    tabsEl.replaceChildren(...TABS.map(([k, label]) =>
+      h('button', { class: 'tab', role: 'tab', type: 'button', 'aria-selected': String(state.tab === k), onClick: () => setTab(k) }, label)));
+  }
+  function drawPanel() {
+    const fn = { perfil: tabPerfil, enlaces: tabEnlaces, fotos: tabFotos, diseno: tabDiseno }[state.tab];
+    panel.replaceChildren(...fn());
+  }
+
+  /* ---- Perfil ---- */
+  function tabPerfil() {
+    const avWrap = h('div', { class: 'av-edit' });
+    function drawAv() {
+      const soft = d.theme.avatar_shape === 'soft' ? ' soft' : '';
+      const src = safeHttp(d.avatar_url);
+      avWrap.replaceChildren(
+        src ? h('img', { class: 'pf-av' + soft, src, alt: 'Tu foto de perfil' }) : h('div', { class: 'pf-av ph' + soft, style: { '--btn': 'var(--lilac)', '--btn-fg': 'var(--ink)' } }, (d.display_name || d.username || '?').charAt(0).toUpperCase()),
+        h('div', { style: { display: 'flex', gap: '8px', 'flex-wrap': 'wrap' } },
+          h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: async () => {
+            const [f] = await pickFiles(false); if (!f) return;
+            const [url] = await uploadMany([f], 512); if (!url) return;
+            trashUrl(d.avatar_url); d.avatar_url = url; touch(); drawAv();
+          } }, src ? 'Cambiar foto' : 'Subir foto'),
+          src ? h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: () => { trashUrl(d.avatar_url); d.avatar_url = ''; touch(); drawAv(); } }, 'Quitar') : null));
+    }
+    drawAv();
+    const bio = h('textarea', { maxlength: '160', rows: '3', onInput: e => { d.bio = e.target.value; count.textContent = d.bio.length + '/160'; touch(); } });
+    bio.value = d.bio;
+    const count = h('span', { class: 'hint' }, d.bio.length + '/160');
+    const user = h('input', { type: 'text', value: d.username, maxlength: '24', autocomplete: 'off', autocapitalize: 'none',
+      onInput: e => { const v = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''); e.target.value = v; d.username = v; touch(); } });
+    return [h('div', { class: 'sect' },
+      h('h3', {}, 'Tu perfil'),
+      avWrap,
+      field('Nombre visible', h('input', { type: 'text', value: d.display_name, maxlength: '50', onInput: e => { d.display_name = e.target.value; touch(); } })),
+      field('Nombre de usuario', user, 'Es el final de tu enlace. Solo minúsculas, números y _.'),
+      h('div', { class: 'field' }, h('span', { class: 'lbl' }, 'Biografía'), bio, count))];
+  }
+
+  /* ---- Enlaces ---- */
+  function tabEnlaces() {
+    const list = h('div', {});
+    function move(i, dir) { const j = i + dir; if (j < 0 || j >= d.links.length) return; [d.links[i], d.links[j]] = [d.links[j], d.links[i]]; touch(); drawList(); }
+    function row(l, i) {
+      const thumb = h('button', { class: 'thumb', type: 'button', 'aria-label': l.image ? 'Cambiar imagen del enlace' : 'Añadir imagen al enlace', onClick: async () => {
+        const [f] = await pickFiles(false); if (!f) return;
+        const [url] = await uploadMany([f], 256); if (!url) return;
+        trashUrl(l.image); l.image = url; touch(); drawList();
+      } }, l.image ? h('img', { src: safeHttp(l.image), alt: '' }) : '+');
+      return h('div', { class: 'row' },
+        h('div', {}, thumb, l.image ? h('button', { class: 'linkbtn', type: 'button', style: { 'font-size': '.75rem', 'margin-top': '4px' }, onClick: () => { trashUrl(l.image); l.image = ''; touch(); drawList(); } }, 'Quitar') : null),
+        h('div', { class: 'fields' },
+          h('input', { type: 'text', value: l.title, maxlength: '60', placeholder: 'Título (ej. Mi tienda)', 'aria-label': 'Título del enlace', onInput: e => { l.title = e.target.value; touch(); } }),
+          h('input', { type: 'text', value: l.url, maxlength: '500', placeholder: 'https://…', autocapitalize: 'none', 'aria-label': 'Dirección del enlace', onInput: e => { l.url = e.target.value; touch(); } })),
+        h('div', { class: 'acts' },
+          h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Subir', disabled: i === 0, onClick: () => move(i, -1) }, '↑'),
+          h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Bajar', disabled: i === d.links.length - 1, onClick: () => move(i, 1) }, '↓'),
+          h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Eliminar enlace', onClick: () => { trashUrl(l.image); d.links.splice(i, 1); touch(); drawList(); } }, '✕')));
+    }
+    function drawList() {
+      list.replaceChildren(...[
+        ...d.links.map(row),
+        d.links.length ? null : h('p', { class: 'hint', style: { 'margin-bottom': '12px' } }, 'Aún no hay enlaces. Añade el primero.')
+      ].filter(Boolean));
+    }
+    drawList();
+    return [h('div', { class: 'sect' },
+      h('h3', {}, 'Tus enlaces'),
+      list,
+      h('button', { class: 'btn btn-primary btn-sm', type: 'button', onClick: () => {
+        if (d.links.length >= 30) { toast('Máximo 30 enlaces.', 'error'); return; }
+        d.links.push({ id: rid(), title: '', url: '', image: '' }); touch(); drawList();
+        const last = list.querySelector('.row:last-child input'); if (last) last.focus();
+      } }, '+ Añadir enlace'))];
+  }
+
+  /* ---- Fotos ---- */
+  function tabFotos() {
+    const grid = h('div', { class: 'g-grid' });
+    function move(i, dir) { const j = i + dir; if (j < 0 || j >= d.gallery.length) return; [d.gallery[i], d.gallery[j]] = [d.gallery[j], d.gallery[i]]; touch(); drawGrid(); }
+    function drawGrid() {
+      grid.replaceChildren(...d.gallery.map((g, i) => h('div', { class: 'g-item' },
+        h('img', { src: safeHttp(g.url), alt: g.caption || 'Foto de la galería' }),
+        h('input', { type: 'text', value: g.caption, maxlength: '80', placeholder: 'Pie de foto (opcional)', 'aria-label': 'Pie de foto', onInput: e => { g.caption = e.target.value; touch(); } }),
+        h('div', { class: 'g-acts' },
+          h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Mover antes', disabled: i === 0, onClick: () => move(i, -1) }, '‹'),
+          h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Eliminar foto', onClick: () => { trashUrl(g.url); d.gallery.splice(i, 1); touch(); drawGrid(); } }, '✕'),
+          h('button', { class: 'icon-btn', type: 'button', 'aria-label': 'Mover después', disabled: i === d.gallery.length - 1, onClick: () => move(i, 1) }, '›')))));
+    }
+    drawGrid();
+    return [h('div', { class: 'sect' },
+      h('h3', {}, 'Tus fotos'),
+      h('p', { class: 'hint', style: { 'margin-bottom': '12px' } }, 'Se muestran en una cuadrícula bajo tus enlaces. Se reducen y comprimen antes de subirlas.'),
+      h('button', { class: 'btn btn-primary btn-sm', type: 'button', onClick: async () => {
+        const room = 24 - d.gallery.length;
+        if (room <= 0) { toast('Máximo 24 fotos.', 'error'); return; }
+        const files = (await pickFiles(true)).slice(0, room); if (!files.length) return;
+        const urls = await uploadMany(files, 1200);
+        urls.forEach(u => d.gallery.push({ id: rid(), url: u, caption: '' }));
+        if (urls.length) { touch(); drawGrid(); }
+      } }, '+ Añadir fotos'),
+      grid)];
+  }
+
+  /* ---- Diseño ---- */
+  function tabDiseno() {
+    const T = d.theme;
+    const colorField = (label, key) => h('div', { class: 'field' }, h('span', { class: 'lbl' }, label),
+      h('input', { type: 'color', value: T[key], 'aria-label': label, onInput: e => { T[key] = e.target.value; T.preset = 'custom'; touch(); } }));
+    const apply = key => { Object.assign(T, themeOf(key), { bg_image: T.bg_image, avatar_shape: T.avatar_shape }); touch(); drawPanel(); };
+    const bgImg = h('div', {},
+      h('div', { style: { display: 'flex', gap: '8px', 'flex-wrap': 'wrap', 'margin-bottom': '8px' } },
+        h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: async () => {
+          const [f] = await pickFiles(false); if (!f) return;
+          const [url] = await uploadMany([f], 1600); if (!url) return;
+          trashUrl(T.bg_image); T.bg_image = url; T.preset = 'custom'; touch(); drawPanel();
+        } }, T.bg_image ? 'Cambiar imagen' : 'Subir imagen de fondo'),
+        T.bg_image ? h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: () => { trashUrl(T.bg_image); T.bg_image = ''; touch(); drawPanel(); } }, 'Quitar') : null),
+      h('p', { class: 'hint' }, 'Se oscurece un poco para que el texto se lea bien.'));
+
+    return [
+      h('div', { class: 'sect' }, h('h3', {}, 'Temas'),
+        h('div', { class: 'pre' }, Object.entries(PRESETS).map(([k, p]) =>
+          h('button', { class: 'chip', type: 'button', 'aria-pressed': String(T.preset === k), onClick: () => apply(k) }, swatch(p), p.name)))),
+      h('div', { class: 'sect' }, h('h3', {}, 'Fondo'),
+        seg([['color', 'Color liso'], ['gradient', 'Degradado'], ['image', 'Imagen']], T.bg_type, v => { T.bg_type = v; T.preset = 'custom'; touch(); drawPanel(); }),
+        T.bg_type === 'image' ? bgImg
+          : h('div', { class: 'colors' }, colorField(T.bg_type === 'gradient' ? 'Color inicial' : 'Color de fondo', 'bg_color'), T.bg_type === 'gradient' ? colorField('Color final', 'bg_color2') : null)),
+      h('div', { class: 'sect' }, h('h3', {}, 'Colores'),
+        h('div', { class: 'colors' }, colorField('Texto', 'text_color'), colorField('Botones', 'btn_color'), colorField('Texto del botón', 'btn_text'))),
+      h('div', { class: 'sect' }, h('h3', {}, 'Botones y tipografía'),
+        h('span', { class: 'lbl' }, 'Forma de los botones'),
+        seg([['pill', 'Píldora'], ['round', 'Redondeado'], ['square', 'Recto'], ['outline', 'Contorno']], T.btn_style, v => { T.btn_style = v; T.preset = 'custom'; touch(); drawPanel(); }),
+        h('span', { class: 'lbl' }, 'Tipografía'),
+        seg(Object.entries(FONTS).map(([k, f]) => [k, f.label]), T.font, v => { T.font = v; T.preset = 'custom'; touch(); drawPanel(); }, v => ({ 'font-family': FONTS[v].css })),
+        h('span', { class: 'lbl' }, 'Foto de perfil'),
+        seg([['circle', 'Círculo'], ['soft', 'Cuadrado suave']], T.avatar_shape, v => { T.avatar_shape = v; touch(); drawPanel(); }))
+    ];
+  }
+
+  /* ---- Guardar ---- */
+  async function doSave() {
+    if (state.saving || !state.dirty) return;
+    const username = d.username.trim().toLowerCase();
+    if (!USERNAME_RE.test(username)) { toast('El usuario debe tener entre 3 y 24 caracteres: minúsculas, números o _.', 'error'); setTab('perfil'); return; }
+    state.saving = true; syncSave();
+    const links = d.links.filter(l => l.title.trim() || l.url.trim()).map(l => ({ id: l.id, title: l.title.trim(), url: l.url.trim(), image: l.image || '' }));
+    const row = {
+      username, display_name: d.display_name.trim(), bio: d.bio.trim(), avatar_url: d.avatar_url || null,
+      theme: d.theme, links, gallery: d.gallery.filter(g => g.url).map(g => ({ id: g.id, url: g.url, caption: g.caption.trim() })),
+      updated_at: new Date().toISOString()
+    };
+    const { data, error } = await sb.from('profiles').update(row).eq('id', state.session.user.id).select().single();
+    state.saving = false;
+    if (error) {
+      toast(error.code === '23505' ? 'Ese nombre de usuario ya está en uso.' : 'No se pudo guardar: ' + error.message, 'error');
+      syncSave(); return;
+    }
+    d.username = username; d.links = links;
+    state.profile = data; state.dirty = false;
+    const junk = state.trash; state.trash = [];
+    removeMedia(junk);
+    toast('Cambios guardados');
+    syncSave(); drawPanel();
+  }
+
+  async function signOut() {
+    if (state.dirty && !confirm('Tienes cambios sin guardar. ¿Salir igualmente?')) return;
+    await sb.auth.signOut();
+    state.profile = state.draft = state.owner = null; state.dirty = false; state.trash = [];
+    go('#/');
+  }
+
+  const root = h('div', { class: 'ed' },
+    h('header', { class: 'ed-top' },
+      logo(),
+      h('span', { class: 'urlpill' }, urlText,
+        h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: async () => {
+          try { await navigator.clipboard.writeText(pubUrl()); toast('Enlace copiado'); } catch { toast(pubUrl()); }
+        } }, 'Copiar')),
+      h('span', { class: 'spacer' }),
+      h('button', { class: 'btn btn-ghost btn-sm only-mobile', type: 'button', onClick: () => root.classList.add('show-preview') }, 'Vista previa'),
+      viewLink, saveBtn,
+      h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onClick: signOut }, 'Salir')),
+    h('div', { class: 'ed-body' },
+      h('section', {}, tabsEl, panel),
+      h('aside', { class: 'preview-col', 'aria-label': 'Vista previa de tu página' },
+        h('button', { class: 'btn btn-primary btn-sm only-mobile', type: 'button', onClick: () => root.classList.remove('show-preview') }, 'Cerrar vista previa'),
+        h('div', { class: 'phone' }, screen),
+        h('p', { class: 'hint' }, 'Así se verá tu página.'))));
+
+  mount(root);
+  drawTabs(); drawPanel(); drawPreview(); syncSave();
+}
+
+/* =====================================================================
+   10) Router y arranque
+   ===================================================================== */
+async function route() {
+  const tok = ++state.rt;
+  const hash = location.hash;
+  document.title = TITLE;
+  if (/^#\/entrar/.test(hash)) return viewAuth('login');
+  if (/^#\/crear/.test(hash)) return viewAuth('signup');
+  if (/^#\/nueva-clave/.test(hash)) return viewNewPassword();
+  if (/^#\/editor/.test(hash)) return viewEditorEntry(tok);
+  const m = hash.match(/^#\/u\/([^/?]+)/);
+  if (m) return viewProfile(decodeURIComponent(m[1]).toLowerCase(), tok);
+  return viewHome();
+}
+
+window.addEventListener('hashchange', route);
+window.addEventListener('beforeunload', e => { if (state.dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+(async function init() {
+  if (sb) {
+    const { data } = await sb.auth.getSession();
+    state.session = data.session;
+    sb.auth.onAuthStateChange((event, session) => {
+      const before = state.session && state.session.user.id;
+      state.session = session;
+      if (event === 'PASSWORD_RECOVERY') { setTimeout(() => go('#/nueva-clave'), 0); return; }
+      if ((session && session.user.id) !== before) {
+        setTimeout(() => { if (session && /^#\/(entrar|crear)/.test(location.hash)) go('#/editor'); else route(); }, 0);
+      }
+    });
+  }
+  route();
+})();
+})();
+</script>
+</body>
+</html>
